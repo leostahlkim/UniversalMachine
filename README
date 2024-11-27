@@ -1,0 +1,294 @@
+UM
+Date: 21 November
+
+
+--------------------- Project Description --------------------
+
+This project consists of an executable named um that emulates a “Universal 
+Machine” (UM). The executable takes a single argument: the pathname for a file 
+(typically with a name like some program.um) that contains machine instructions 
+for your emulator to execute.
+
+The UM has these components:
+
+   • Eight general-purpose registers holding one 32-bit word each.
+
+   • An address space that is divided into an ever-changing collection of 
+   memory segments. Each segment contains a sequence of words, and each is 
+   referred to by a distinct 32-bit identifier. The memory issegmented and 
+   word-oriented; you cannot load a byte.
+
+   • An I/O device capable of displaying ASCII characters and performing input 
+   and output of unsigned 8-bit characters. The device uses stdin and stdout to 
+   implement the UM’s I/O instructions.
+
+   • A 32-bit program counter.
+   
+   • One distinguished segment is referred to by the 32-bit identifier 0 and 
+   stores the program. This segment is called the 0 segment.
+
+--------------------- All .c and .h files you have written --------------------
+um_main.c
+operations.c           operations.h
+memory.c               memory.h
+instruction_packing.c  instruction_packing.h
+
+------------- Identifies you and your programming partner by name -------------
+Eric Zhao (ezhao05)
+Leo Kim   (lkim11)
+
+
+-------------------- Correctly implemented and what has not -------------------
+Every module has been implemented correctly with appropriate assert statements.
+The UM main has been implemented correctly with the expected behavior.
+
+
+----------------- Any significant departures from your design -----------------
+We decided to store all the registers in our operations module instead of in 
+our UM main. Apart from that, we follow the original design thoroughly.
+
+------------------------- Architecture of your system -------------------------
+Identify the modules used, what abstractions they implement, what secrets they 
+know, and how they relate to one another. Avoid narrative descriptions of the
+behavior of particular modules.
+
+We plan on breaking our implementation into four separate modules: 
+1. one module for bit packing and unpacking of the 32-bit UM instructions:
+   instruction_packing.h instruction_packing.c
+
+2. one module for the UM operations:
+   operations.h operations.c
+
+3. one module for segmented memory management:
+   memory.h memory.c
+
+4. one main program:
+   um_main.c
+
+The instruction packing module allows the user to manipulate a 32-bit UM 
+instruction word with a variety of different functions that add and extract 
+data from requested fields, such as the register numbers, operation code, and 
+load values. This module hides to secret of how values are packed and unpacked
+from the instruction. This module is exported to our operations module.
+
+The memory module allows the user to load a program into segment 0 of the 
+memory, allocate and deallocate memory segments, extract values from specific 
+indices of memory, get the next instruction from the loaded program, and load a
+new program into segment 0. This module hides the secrets of the data 
+structures we use to store the memory, by exporting the memory struct as a 
+struct pointer. This module is exported to our operations module.
+
+The operations module does the core of the operations in our UM program. Given 
+an instruction, this module uses private helper functions to execute the 
+requested operations on the requested registers. This module uses functions 
+from our instruction packing and memory modules. This module stores the secrets
+of how registers are stored as well as how each individual operation is 
+implemented.
+
+Our um_main is the main function for our UM program. This program reads in a 
+binary file of UM instructions and executes them using functions from our 
+operations module.
+
+
+---------------- Time taken to execute 50 million instructions ----------------
+Time taken: around 5 seconds.
+
+In one of our .um test files (run_500k.um), we wrote a loop that execute 
+500,000 instructions. It took us 0.05 seconds to run 500,000 instructions.
+Multiplying that by 100 gets us 5 seconds, which is the estimated time taken
+for our UM machine to run 50 million instructions.
+
+-------------------------------- UM unit tests --------------------------------
+
+( Note that we also ran valgrind against all .um test files to make sure there
+  is not memory issues. We made output files from the lab for each test case so
+  that we can diff test the UM results from our epected output. We also use the
+  reference UM to get output files and diff them against our own output files.)
+
+- halt.um:
+This tests the halt instruction only. The UM is halted immediately and does not
+run any other commands. This is also checking if our UM implementation is
+initialize correctly.
+
+- halt-verbose.um:
+This tests the halt instruction only. The UM is halted immediately and does not
+run any other commands. We make sure that the program halted by giving multiple
+instructions after halting it. This is also checking if our UM implementation
+is initialize correctly.
+
+- load_output.um:
+This tests the load instruction and the output instruction. By loading 
+different values into different registers and printing them using the output
+instruction, we make sure that both instructions work fine.
+
+- input_output.um:
+This tests the input instruction and the output instruction. We request 4 
+inputs from the caller, storing them into different registers, and printing
+them to the standard output. We make sure that the input values are being put
+in the correct registers and that the value in each register are being printed
+in the correct format (char).
+
+- add.um:
+This tests the add instruction. We are adding 2 registers that both hold the 
+value 0. This is to check that our add instruction doesn't crash our program.
+
+- input_eof.um:
+This tests the input instruction and the add instruction. The UM takes in two
+inputs, an arbitary one and an EOF. By adding the two registers, we verify that
+EOF sets the appropriate register to all bit values of 1. 
+
+- print-six.um:
+This test the load value instruction, the add instruction, and the output 
+instruction. We load 2 values into two registers, add them up and store the 
+result into a third register. By ouputing the value of the third register, we
+verify that the addition is done properly.
+
+- multiple_add.um:
+This test the load value instruction, the add instruction, and the output 
+instruction. We load multiple values into different registers and perform
+addition multiple times with different values. We verify the result by printing
+it out on standard output.
+
+- input_add.um:
+This tests the input instruction and the add instruction. We take two inputs
+from the caller, adds them up, and prints the result to standard output. We
+verify that the instructions are functioning properly by checking the result 
+with the expected output.
+
+- multiply.um:
+This tests the multiply instruction and the load value instruction. We load 
+two values into two registers, multiply them together, store the result to
+a third register, and print third register. We verify that the instructions are
+functioning properly by checking the result with the expected output.
+
+- multiply_many.um:
+This tests the multiply instruction and the load value instruction. We load
+multiple values into different registers, and perform various multiplications
+between the registers. By printing out the result, we verify that the 
+instructions are functioning properly by checking the result with the expected
+output.
+
+- multiply_by_0.um:
+This tests that the multiply instruction works as expected when multiplying by
+the value 0. We test this by inputing values into the registers and performing
+various multiplications, include multiplying by 0. By printing out the result,
+we verify that the instructions are functioning properly by checking the result
+with the expected output.
+
+- mod_mul.um:
+This tests that the multiply instruction correctly returns a value mod 2^32. We 
+do this by multiplying two register values that produce a result that is greater
+than 2^32. We then print the output to verify that it correctly calculates mod
+2^32.
+
+- divide.um:
+This tests the divide and load value instruction. We loads two non-zero values
+into two seperate registers, divide the first value with the second value, and
+store the result into a third register. By printing out the result, we verify 
+that the instructions are functioning properly by checking the result with the
+expected output.
+
+- divide_many.um:
+This tests the divide operation by dividing many different values in registers,
+then outputting the value. We print the output to verify that it is as expected.
+
+- divide_by_1.um:
+This tests that the divide operation correctly divides by 1. We print the
+output to verify that it is as expected.
+
+- divide_by_nonfactor.um:
+This tests that the divide function correctly rounds down when dividing two
+relatively prime numbers. We print the output to verify that it is as expected.
+
+- conditional_move_true.um:
+This tests the conditional move and load value instructions. We load three
+non-zero values into three different registers. We then call conditional move
+with the three registers and check that the value in register a is replaced by
+the value in register b.
+
+- conditional_move_false.um:
+This tests that the conditional move operation does not move a value into the
+requested register when register c contains 0. We do this by calling the
+operation with 0 in register c and then printing to verify values were not
+moved.
+
+- nand_0.um:
+This tests that the nand operation correctly flips two 0 values to a value
+with all bits as 1s. We do this by calling nand on two registers containing 0
+and then adding to the resulting register and outputting it to verify.
+
+- nand_1.um:
+This tests that the nand operation correctly flips two values of all 1 bits to
+0. We do this by calling nand on two registers containing all 1 bits
+and then adding to the resulting register and outputting it to verify.
+
+- mapseg_size0.um:
+This tests the map segment instruction. We verfiy that a new segment is created
+by printing the segment index of the new segment that has been created.
+
+- mapseg_large.um:
+This tests the map segment instruction. We map a large amount of space in the 
+new segment. We verfiy that a new segment is created by printing the segment 
+index of the new segment that has been created.
+
+- mapseg_many.um:
+This tests the map segment instruction with multiple calls (100 calls) to the 
+map segment function. We verify the segment index of the last segment created
+(segment no. 100) by printing its segment index.
+
+- unmapseg_size1.um:
+This tests that our unmap segment operation can correctly unmap a single 
+segment. We do this by mapping and unmapping a segment, then mapping an
+additional segment to verify the ID is as expected.
+
+- unmapseg_many.um:
+This tests our unmap segment operation by mapping a large amount of segments
+and then unmapping then. We then map one additional segment and verify that
+its segment ID is as expected.
+
+- unmapseg_alt.um:
+This tests that our map and unmap segment operations work correctly with
+eachother. We test this by alternating between mapping and unmapping segments
+and verifying that the mapped segments replace the unmapped segments by
+outputting the segment ID.
+
+- seg_store.um:
+This tests that the segmented store operation runs without crashing
+our program.
+
+- seg_load.um:
+This tests that the segmented load function correctly loads stored values.
+We test this by storing a value, then loading and outputting it.
+
+- seg_storeload.um:
+This tests that the segmented load and store operations correctly interact
+with eachother. We do this by loading a halt instruction into a register from
+segment 0, and then storing this halt instruction at a lower index in segment
+0. We then verify that our program did not output values past this halt
+instruction.
+
+- load_prog.um:
+We initialise program with multiple instructions in segment 0. Then we load the
+final 3 lines of our program into a new segment. We then load the new segment
+into segment 0 as our new set of instruction. The program should now run the 
+last 3 lines of the original intructions, which loads a value into a register,
+prints the value of that register, and halts the program. It should not run 
+other lines of our original program that print other bogus values.
+
+- run_500k.um:
+This tests our load value, nand, add, conditional move, and load program 
+instructions. We initialize a counter 50,000 stored in one of the registers.
+We then create a loop that does 10 bogus operations in each iteration. Every
+time the iteration is ran, the counter get decremented by 1. The loop stops
+running when the counter is 0, which is checked by the conditional move 
+instruction. Once the loop is ran 50,000 times, the program halts. We time
+the elapsed time for our UM to run this .um file to verify that our program
+runs 50 million instructions under 1 minute.
+
+
+--------------------------------- Hours spent ---------------------------------
+Analyzing the assignment: 2 hours
+Preparing the design: 10 hours
+Solving the problems: 20 hours
+
+-------------------------------------------------------------------------------
